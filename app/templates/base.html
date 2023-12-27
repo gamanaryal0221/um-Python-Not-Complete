@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400&display=swap" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500&display=swap" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css?family=Source+Serif+Pro:400,600&display=swap" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+
+    <!-- Style -->
+    <link rel="stylesheet" href="/static/css/style.css">
+
+    <style>
+        /* CSS for the overlay */
+        #overlay {
+            display: none;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background-color: rgba(255, 255, 255, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        #loading-message {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+        }
+    </style>
+
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 20px;
+    }
+
+    h2 {
+        color: #333;
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        height: 80%; /* Set the height to 80% of the viewport height */
+        margin-top: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    th, td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        text-align: left;
+        font-size: 14px;
+        color: #333;
+    }
+
+    th {
+        background-color: #f2f2f2;
+    }
+
+    tbody {
+        overflow-y: auto;
+    }
+
+    tbody tr:hover {
+        background-color: #f5f5f5;
+    }
+
+    #pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    #pagination a {
+        color: #007BFF;
+        padding: 8px 12px;
+        margin: 0 4px;
+        text-decoration: none;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+    }
+
+    #pagination a:hover {
+        background-color: #007BFF;
+        color: #fff;
+    }
+
+    #limit, #sortBy, #listClientService, #addNewService {
+        margin-right: 15px;
+        padding: 8px;
+        font-size: 14.5px;
+        background-color: #949495;
+        color: #ffff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+</style>
+
+    {% block styles %}{% end %}
+
+</head>
+
+<body>
+
+    <aside class="sidebar">
+        <div class="toggle">
+            <a href="#" class="burger js-menu-toggle" data-toggle="collapse" data-target="#main-navbar">
+                <span></span>
+            </a>
+        </div>
+        <div class="side-inner">
+
+            <div class="profile">
+                <img src="" alt="Image" class="img-fluid">
+                <h3 class="name"></h3>
+                <span class="country"></span>
+            </div>
+
+            <!-- <div class="counter d-flex justify-content-center">
+                <div class="col">
+                    <strong class="number">892</strong>
+                    <span class="number-label">Posts</span>
+                </div>
+                <div class="col">
+                    <strong class="number">22.5k</strong>
+                    <span class="number-label">Followers</span>
+                </div>
+                <div class="col">
+                    <strong class="number">150</strong>
+                    <span class="number-label">Following</span>
+                </div>
+            </div> -->
+
+            <div class="nav-menu">
+                <ul>
+                    <!-- <li><a href="#"><span class="icon-sign-out mr-3"></span>Sign out</a></li> -->
+
+                    <li id="home-link"> <a href="/">List of Users</a> </li>
+                    <li>
+                        <a href="#userSubmenu" data-toggle="collapse" aria-expanded="false"
+                            class="dropdown-toggle">User</a>
+                        <ul class="collapse list-unstyled" id="userSubmenu">
+                            <li id="add-user-link"> <a href="/users">Add User</a> </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#clientSubmenu" data-toggle="collapse" aria-expanded="false"
+                            class="dropdown-toggle">Client</a>
+                        <ul class="collapse list-unstyled" id="clientSubmenu">
+                            <li id="add-client-link"> <a href="/client/add">Add Client</a> </li>
+                            <li id="list-of-clients-link"> <a href="/client/list">List of Clients</a> </li>
+                            <li id="client-default-setting-link"> <a href="/users">Client Default Setting</a> </li>
+                        </ul>
+                    </li>
+                    <li id="list-of-services-link"> <a href="/service/list">Services</a> </li>
+                    <li>
+                        <a href="#moreOptionsSubmenu" data-toggle="collapse" aria-expanded="false"
+                            class="dropdown-toggle">More</a>
+                        <ul class="collapse list-unstyled" id="moreOptionsSubmenu">
+                            <li id="logout-link"> <a href="#">Logout</a> </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+    </aside>
+    <main>
+        <div class="page">
+            <h2 id="page-title" class="page-title"></h2>
+            <div class="page-content">
+                {% block content %}{% end %}
+            </div>
+        </div>
+    </main>
+
+    <!-- Overlay for loading indicator -->
+    <div id="overlay">
+        <div id="loading-message">Please wait...</div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var path = window.location.pathname;
+
+            var pageTitle;
+            var activeLinkId = null;
+
+            switch (path) {
+                case "/":
+                    pageTitle = "List of Users";
+                    activeLinkId = "home-link";
+                    break;
+                case "/client/list":
+                    pageTitle = "List of Clients";
+                    activeLinkId = "list-of-clients-link";
+                    break;
+                case "/client/add":
+                    pageTitle = "Add Client";
+                    activeLinkId = "add-client-link";
+                    break;
+                case "/client/list-client-service":
+                    pageTitle = "List Client Service";
+                    break;
+                case "/service/list":
+                    pageTitle = "List of Services";
+                    activeLinkId = "list-of-services-link";
+                    break;
+                default:
+                    pageTitle = "Not Found";
+                    activeLinkId = null;
+            }
+
+             
+            console.log(path+" - "+pageTitle)
+
+            document.title = pageTitle;
+            var pageTitleElement = document.getElementById("page-title");
+            if (pageTitleElement) pageTitleElement.textContent = pageTitle;
+
+            // Remove active class from all links
+            var navLinks = document.querySelectorAll(".nav-link");
+            navLinks.forEach(function (link) {
+                link.classList.remove("active");
+            });
+
+            // Add active class to the corresponding link
+            if (activeLinkId) {
+                var activeLink = document.getElementById(activeLinkId);
+                if (activeLink) activeLink.classList.add("active");
+            }
+
+            document.getElementById("logout-link").addEventListener("click", function(event) {
+                console.log("Logout")
+                event.preventDefault();
+
+                var form = document.createElement("form");
+                form.method = "POST"; // Set the HTTP method to POST
+                form.action = "/user/logout"; // Set the URL to submit the form to
+
+                // Add an input element of type "submit" to the form
+                var submitInput = document.createElement("input");
+                submitInput.type = "submit";
+                submitInput.style.display = "none"; // Hide the submit button
+
+                // Append the input element to the form
+                form.appendChild(submitInput);
+
+                // Append the form to the document body
+                document.body.appendChild(form);
+
+                // Submit the form by triggering a click event on the hidden submit button
+                submitInput.click();
+                console.log("Submitted")
+            });
+
+        });
+    
+        // Function to show loading overlay
+        function showLoading() {
+            $("#overlay").show();
+        }
+
+        // Function to hide loading overlay
+        function hideLoading() {
+            $("#overlay").hide();
+        }
+
+        // Function to handle pagination
+        function populatePagination(activePageNumber, totalPages, visiblePages = 10) {
+            var pagination = $('#pagination');
+            pagination.empty();
+
+            var startPage = Math.max(1, activePageNumber - Math.floor(visiblePages / 2));
+            var endPage = Math.min(totalPages, startPage + visiblePages - 1);
+
+            // Add previous link
+            if (activePageNumber > 1) {
+                pagination.append('<a href="#" data-page="' + (activePageNumber - 1) + '">Previous</a>');
+            }
+
+            for (var i = startPage; i <= endPage; i++) {
+                var pageLink = (activePageNumber === i) ?
+                    '<a id="activePageNumber" style="background-color: #007BFF; color: #fff;" href="#" data-page="' + i + '">' + i + '</a>' :
+                    '<a href="#" data-page="' + i + '">' + i + '</a>';
+                pagination.append(pageLink);
+            }
+
+            // Add next link
+            if (activePageNumber < totalPages) {
+                pagination.append('<a href="#" data-page="' + (activePageNumber + 1) + '">Next</a>');
+            }
+        }
+        
+        // Function to show the total number of records for the specific query
+        function populateTotalRecords(text){
+            document.getElementById("totalRecords").textContent = text
+        }
+    </script>
+
+
+
+    {% block scripts %}{% end %}
+    <script src="/static/js/jquery-3.3.1.min.js"></script>
+    <script src="/static/js/popper.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,153 @@
+{% extends "..\base.html" %}
+
+{% block styles %}
+
+{% end %}
+
+
+{% block content %}
+
+<form id="clientListForm" action="/client/list" method="post">
+    <div style="display: flex; align-items: center; justify-content: flex-end;">
+        <p id="totalRecords" style="margin-bottom: 0px; margin-right: 15px; color: #676768;"></p>
+
+        <a id="listClientService" style="background-color: #1f4a79;" href="/client/list-client-service">List Client Service</a>
+
+        <select id="sortBy" name="sortBy">
+            <option value="c.id asc" selected>Client ID (ASC)</option>
+            <option value="c.id desc">Client ID (DESC)</option>
+            <option value="c.name asc">Client Name (ASC)</option>
+            <option value="c.name desc">Client Name (DESC)</option>
+            <option value="c.display_name asc">Display Name (ASC)</option>
+            <option value="c.display_name desc">Display Name (DESC)</option>
+            <option value="c.vcp_id asc">VCP ID (ASC)</option>
+            <option value="c.vcp_id desc">VCP ID (DESC)</option>
+        </select>
+
+        <select id="limit" name="limit">
+            <option value="5">Show 5 clients</option>
+            <option value="10" selected>Show 10 clients</option>
+            <option value="20">Show 20 clients</option>
+            <option value="50">Show 50 clients</option>
+        </select>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Client ID</th>
+                <th>Name</th>
+                <th>Display Name</th>
+                <th>VCP ID</th>
+                <th>Parent Client Display Name</th>
+            </tr>
+            <tr>
+                <th><input type="text" id="id" name="id"></th>
+                <th><input type="text" id="name" name="name"></th>
+                <th><input type="text" id="display_name" name="display_name"></th>
+                <th><input type="text" id="vcp_id" name="vcp_id"></th>
+                <th><input type="text" id="parent_client_display_name" name="parent_client_display_name"></th>
+            </tr>
+        </thead>
+        <tbody id="clientDataBody">
+            <!-- Data rows will be dynamically populated here -->
+        </tbody>
+    </table>
+
+    <div id="pagination" class="pagination">
+        <!-- Pagination links will be dynamically populated here -->
+    </div>
+</form>
+
+{% end %}
+
+
+{% block scripts %}
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        function fetchData(pageNumber, limit) {
+            showLoading();
+
+            const data = {
+                page_number: pageNumber, 
+                limit: limit,
+                sort_by: $('#sortBy').val(), 
+                id: $('#id').val(),
+                name: $('#name').val(),
+                display_name: $('#display_name').val(),
+                vcp_id: $('#vcp_id').val(),
+                parent_client_display_name: $('#parent_client_display_name').val()
+            }
+
+            $.ajax({
+                url: '/client/list',
+                method: 'POST',
+                data: JSON.stringify(data),
+                success: function (response) {
+                    hideLoading();
+                    if (response.message){
+                        $('#clientDataBody').empty();
+                        console.error(response.message);
+                    }else{
+                        populateTable(response.clients);
+                        populatePagination(pageNumber, response.total_pages);
+                        populateTotalRecords("Total Clients:" + response.total_records);
+                    }
+                },
+                error: function (error) {
+                    $('#clientDataBody').empty();
+                    console.error('Error fetching data:', error);
+                }
+            });
+        }
+
+        fetchData(1, $('#limit').val());
+
+        function populateTable(data) {
+            var tableBody = $('#clientDataBody');
+            tableBody.empty()
+
+            $.each(data, function (index, client) {
+                var row = '<tr>' +
+                    '<td>' + client.id + '</td>' +
+                    '<td><a target="_blank" style="color:#454545;" href="/client/edit/' + client.id + '"><u>' + client.name + '</u></a></td>' +
+                    '<td>' + client.display_name + '</td>' +
+                    '<td>' + client.vcp_id + '</td>'
+
+                if (client.parent_client_id){
+                    row = row + '<td><a target="_blank" style="color:#454545;" href="/client/edit/' + client.parent_client_id + '"><u>' + client.parent_client_display_name + '</u></a></td>'
+                }else{
+                    row = row + '<td></td>'
+                }
+
+                row =  row + '</tr>';
+                tableBody.append(row);
+            });
+        }
+
+        $('#id, #name, #display_name, #vcp_id, #parent_client_display_name').on('keydown', function (event) {
+            if (event.key === 'Enter') {
+                fetchData(1, $('#limit').val());
+            }
+        });
+
+        $('#limit').on('change', function (e) {
+            e.preventDefault();
+            fetchData(1, $(this).val());
+        });
+        
+        $('#sortBy').on('change', function (e) {
+            e.preventDefault();
+            fetchData($("#activePageNumber").data('page'), $(limit).val());
+        });
+
+        $('#pagination').on('click', 'a', function (e) {
+            e.preventDefault();
+            fetchData($(this).data('page'), $('#limit').val());
+        });
+    });
+</script>
+{% end %}

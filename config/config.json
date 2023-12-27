@@ -1,0 +1,25 @@
+{
+    "mysql": {
+        "user_management": {
+            "hostname": "localhost",
+            "database": "user_management_dev",
+            "user": "rm",
+            "password": "rm"
+        }
+    },
+    "firebase": {
+        "db_url": "https://learn-tornado-default-rtdb.asia-southeast1.firebasedatabase.app"
+    },
+    "smtp": {
+        "server": "127.0.0.1",
+        "port": 1025,
+        "username": "",
+        "password": "",
+        "sender_email": "usermanagement@vpc.com"
+    },
+    "cas_login_url": "http://cas.dev.vcp.com:8000/login?host_url=HOST_URL",
+    "cookie_secret": "b18681a513857c203aa9fa0e18bac8735142ecc4358dc761c2c3980aadf0a2e7468c5a7667fe7c913f1bbb8df948c78eefe73a291cb0bf40ce6009f89cd7192aa41d906a8d7ad0fd38cd1df31d2c0134ba141c4a2dc33216442de30fed413cea69cdbba75ba52f4a80fa0eb205961755d5ab305ef4d47ae7d4ff7f669f2900f86744e1eff71f03218e483d72dc0905f760e1364a42686e35840fadb098293919a24b6e262f3d66985b01b06e0a46786ed6baf4cd014abe26c8ad1b608514f07e0e4ae431b745981a695262292b229a3a3e46eec932fbdabc71773c142db470b31adef704f6ba3003d714bf1298d2b49aaa42320b5dca66631b66864cf1127e610da90e17d0f11507c7c29e3cfa23529d717ede4528ad3ed66156ee3cb98c1b6931954b9f5f964b0be8c8db5ecaf9337c32d2b78cbb4fd25fbe24a6f1ec009e7f",
+    "port": 8800,
+    "version": 1.0
+}
+  

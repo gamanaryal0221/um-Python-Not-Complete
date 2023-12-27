@@ -1,0 +1,145 @@
+{% extends "..\base.html" %}
+
+{% block styles %}
+
+{% end %}
+
+
+{% block content %}
+
+<form id="clientListForm" action="/client/list" method="post">
+    <div style="display: flex; align-items: center; justify-content: flex-end;">
+        <p id="totalRecords" style="margin-bottom: 0px; margin-right: 15px; color: #676768;"></p>
+
+        <select id="sortBy" name="sortBy">
+            <option value="c.name asc" selected>Client (ASC)</option>
+            <option value="c.name desc">Client (DESC)</option>
+            <option value="c.display_name asc">Client Name (ASC)</option>
+            <option value="c.display_name desc">Client Name (DESC)</option>
+            <option value="s.display_name asc">Service Name (ASC)</option>
+            <option value="s.display_name desc">Service Name (DESC)</option>
+            <option value="cs.request_host asc">Request Host (ASC)</option>
+            <option value="cs.request_host desc">Request Host (DESC)</option>
+        </select>
+
+        <select id="limit" name="limit">
+            <option value="5">Show 5 records</option>
+            <option value="10" selected>Show 10 records</option>
+            <option value="20">Show 20 records</option>
+            <option value="50">Show 50 records</option>
+        </select>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>S.No</th>
+                <th>Client</th>
+                <th>Client Name</th>
+                <th>Service Name</th>
+                <th>Request Host</th>
+            </tr>
+            <tr>
+                <th></th>
+                <th><input type="text" id="client_name" name="client_name"></th>
+                <th><input type="text" id="client_display_name" name="client_display_name"></th>
+                <th><input type="text" id="service_display_name" name="service_display_name"></th>
+                <th><input type="text" id="request_host" name="request_host"></th>
+            </tr>
+        </thead>
+        <tbody id="clientServiceDataBody">
+            <!-- Data rows will be dynamically populated here -->
+        </tbody>
+    </table>
+
+    <div id="pagination" class="pagination">
+        <!-- Pagination links will be dynamically populated here -->
+    </div>
+</form>
+
+{% end %}
+
+
+{% block scripts %}
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        function fetchData(pageNumber, limit) {
+            showLoading();
+
+            const data = {
+                page_number: pageNumber, 
+                limit: limit,
+                sort_by: $('#sortBy').val(), 
+                client_name: $('#client_name').val(),
+                client_display_name: $('#client_display_name').val(),
+                service_display_name: $('#service_display_name').val(),
+                request_host: $('#request_host').val()
+            }
+
+            $.ajax({
+                url: '/client/list-client-service',
+                method: 'POST',
+                data: JSON.stringify(data),
+                success: function (response) {
+                    hideLoading();
+                    if (response.message){
+                        $('#clientServiceDataBody').empty();
+                        console.error(response.message);
+                    }else{
+                        populateTable(parseInt(limit), parseInt(pageNumber), response.client_service_list);
+                        populatePagination(pageNumber, response.total_pages);
+                        populateTotalRecords("Total Records:" + response.total_records);
+                    }
+                },
+                error: function (error) {
+                    $('#clientServiceDataBody').empty();
+                    console.error('Error fetching data:', error);
+                }
+            });
+        }
+
+        fetchData(1, $('#limit').val());
+
+        function populateTable(limit, pageNumber, data) {
+            var tableBody = $('#clientServiceDataBody');
+            tableBody.empty()
+
+            $.each(data, function (index, client_service) {
+                var row = '<tr>' +
+                    '<th>' + (((pageNumber-1)*limit)+(index+1)) + '</th>' +
+                    '<td><a target="_blank" style="color:#454545;" href="/client/edit/' + client_service.client_id + '"><u>' + client_service.client_name + '</u></a></td>' +
+                    '<td>' + client_service.client_display_name + '</td>' +
+                    '<td><a target="_blank" style="color:#454545;" href="/service/edit/' + client_service.service_id + '"><u>' + client_service.service_display_name + '</u></a></td>' +
+                    '<td>' + client_service.request_host + '</td>' +
+                    '</tr>'
+
+                tableBody.append(row);
+            });
+        }
+
+        $('#client_name, #client_display_name, #service_display_name, #request_host').on('keydown', function (event) {
+            if (event.key === 'Enter') {
+                fetchData(1, $('#limit').val());
+            }
+        });
+
+        $('#limit').on('change', function (e) {
+            e.preventDefault();
+            fetchData(1, $(this).val());
+        });
+        
+        $('#sortBy').on('change', function (e) {
+            e.preventDefault();
+            fetchData($("#activePageNumber").data('page'), $(limit).val());
+        });
+
+        $('#pagination').on('click', 'a', function (e) {
+            e.preventDefault();
+            fetchData($(this).data('page'), $('#limit').val());
+        });
+    });
+</script>
+{% end %}

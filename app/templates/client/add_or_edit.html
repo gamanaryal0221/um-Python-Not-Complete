@@ -1,0 +1,215 @@
+{% extends "..\base.html" %}
+
+{% block styles %}
+<style>
+
+
+</style>
+
+{% end %}
+
+
+{% block content %}
+
+<div id="message" style="display: none; color: red;"></div><br><br>
+ 
+
+<form  id="addEditClientForm" method="post">
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" required><br><br>
+
+    <label for="display_name">Display Name:</label>
+    <input type="text" id="display_name" name="display_name" required><br><br>
+
+    <label for="vcp_id">VCP ID:</label>
+    <input type="text" id="vcp_id" name="vcp_id" required><br><br>
+
+    <label for="clients">Parent Client:</label><br>
+    <select name="clients" id="clients">
+        <option value="-1" selected>Select parent client</option>
+        {% for client in eligible_parent_clients %}
+            <option value="{{client['id']}}">{{client['vcp_id']}} ({{client['display_name']}})</option>
+        {% end %}
+    </select><br><br>
+
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required><br><br>
+
+    <label for="phone">Phone Number:</label>
+    <input type="tel" id="phone" name="phone" required><br><br>
+
+    <label for="is_credential_authentication">Credential Authentication Enabled:</label>
+    <input type="checkbox" id="is_credential_authentication_enabled" name="is_credential_authentication_enabled" checked><br><br>
+
+    <label for="is_google_authentication">Google Authentication Enabled:</label>
+    <input type="checkbox" id="is_google_authentication_enabled" name="is_google_authentication_enabled"><br><br>
+
+    <label for="services">Services:</label><br>
+    <!-- 
+    <select name="services" id="services" multiple data-mdb-filter="true"> -->
+        <!-- {% for service in services %}
+            <option value="{{service['id']}}">{{service['display_name']}}</option>
+        {% end %}
+    </select> -->
+    {% for service in services %}
+        <label>
+            <input type="checkbox" name="services" value="{{ service['id'] }}" onclick="toggleUrlInput(this,'{{ service['id'] }}')">
+            <input type="text" id="serviceName_{{ service['id'] }}" value="{{ service['display_name'] }}" disabled>
+        </label><br>
+
+        <div id="urlSection_{{ service['id'] }}" style="display: none;">
+            {{ service['display_name'] }} URL:
+            <input type="text" id="serviceUrl_{{ service['id'] }}">
+            <br><br>
+        </div>
+    {% end %}
+     
+    <br><br>
+
+    <button type="button" onclick="submitForm()">Add Client</button>
+</form>
+
+{% end %}
+
+
+{% block scripts %}
+
+<script>
+
+    const OK = "ok"
+
+    function toggleUrlInput(checkbox, serviceId) {
+        var urlSection = document.getElementById('urlSection_' + serviceId);
+        if (checkbox.checked) {
+
+            var clientName = $("#name").val().trim()
+            var urlInput = document.getElementById('serviceUrl_'+serviceId)
+
+            $.ajax({
+                type: "POST",
+                url: "/client/service/get-request-host",
+                data: JSON.stringify({client_name:clientName, service_id:serviceId}),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function(response) {
+                    console.log(response);
+                    urlInput.value = response.request_host;
+                },
+                error: function(error) {
+                    console.error("Error:", error);
+                    urlInput.value = "*vcp.com";
+                }
+            });
+
+            urlSection.style.display = 'block';
+        } else {
+            urlSection.style.display = 'none';
+        }
+    }
+
+    // JavaScript code for displaying messages in the message div
+    function showMessage(message, isGreen=false) {
+        const messageDiv = document.getElementById("message");
+        messageDiv.textContent = message;
+        messageDiv.style.display = "block";
+        if (isGreen){
+            messageDiv.style.color = "green"
+        }else{
+            messageDiv.style.color = "red"
+        }
+    }
+
+    // Submit form event handler
+    function submitForm() {
+        showMessage("");
+        
+        // Show loading overlay
+        showLoading();
+
+        const serviceUrls = validateServiceUrls()
+        console.log(serviceUrls)
+        if (serviceUrls == null){
+            hideLoading();
+            return;
+        }
+
+        const formData = {
+            name: $("#name").val().trim(),
+            display_name: $("#display_name").val().trim(),
+            vcp_id: $("#vcp_id").val().trim(),
+            parent_client_id: document.getElementById("clients").value,
+            is_google_authentication_enabled: document.getElementById("is_google_authentication_enabled").checked,
+            is_credential_authentication_enabled: document.getElementById("is_credential_authentication_enabled").checked,
+            email: $("#email").val().trim(),
+            phone: $("#phone").val().trim(),
+            services: serviceUrls,
+        };
+
+        $.ajax({
+            type: "POST",
+            url: "/client/add",
+            data: JSON.stringify(formData),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function(response) {
+                if (response){
+                    if (response.message==OK) {
+                        console.log("ok")
+                    } else {
+                        showMessage(response.message)
+                    }
+                }else{
+                    showMessage("Something went wrong Please try again")
+                }
+
+                hideLoading();
+            },
+            error: function(error) {
+                console.error("Error:", error);
+
+                hideLoading();
+                showMessage("Something went wrong Please try again")
+            }
+        });
+
+    }
+
+    function validateServiceUrls() {
+        var selectedServices = document.querySelectorAll('input[name="services"]:checked');
+        console.log(selectedServices)
+        var messages = [];
+        var data = []
+
+        selectedServices.forEach(function (service) {
+            var serviceId = service.value;
+            var urlInput = document.getElementById('serviceUrl_' + serviceId);
+            var request_host = urlInput.value;
+
+            if (request_host){
+                if (isValidUrl(request_host)){
+                    data.push({ "id": serviceId, "request_host": request_host });
+                }else{
+                    showMessage("Invalid URL for service: "+document.getElementById('serviceName_'+serviceId).value)
+                }
+            }else{
+                showMessage("Empty URL for service: "+document.getElementById('serviceName_'+serviceId).value)
+            }
+        });
+
+        if (messages.length > 0) {
+            showMessage(messages.join(','))
+            return null;
+        }
+
+        return data;
+    }
+
+    function isValidUrl(url) {
+        // var urlPattern = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i;
+        var urlPattern = /^[^:/?#]+vcp\.com$/i;
+        return urlPattern.test(url);
+    }
+
+</script>
+
+{% end %}

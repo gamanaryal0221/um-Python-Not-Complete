@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Error</title>
+
+    <!-- Google font -->
+    <link href="https://fonts.googleapis.com/css?family=Maven+Pro:400,900" rel="stylesheet">
+    
+    <!-- Style -->
+    <link rel="stylesheet" href="/static/css/error_style.css">
+
+</head>
+
+<body>
+
+    <div id="error-container">
+        <div class="error-sub-container">
+            <div class="error-status-code">
+                {% if error.get('status_code') %}
+                <h1>{{error['status_code']}}</h1>
+                {% end %}
+            </div>
+            {% if error.get('title') %}
+            <h2>{{error['title']}}</h2>
+            {% end %}
+
+            {% if error.get('message') %}
+            <p>{{error['message']}}</p>
+            {% end %}
+
+            {% if error.get('redirect_url') and error.get('redirect_text') %}
+            <a href="{{error['redirect_url']}}">{{error['redirect_text']}}</a>
+            {% end %}
+        </div>
+    </div>
+
+</body>
+
+</html>

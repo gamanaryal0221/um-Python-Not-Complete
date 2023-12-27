@@ -1,0 +1,158 @@
+{% extends "..\base.html" %}
+
+{% block styles %}
+
+
+{% end %}
+
+
+{% block content %}
+
+  <!-- Overlay and pop-up container -->
+  <div class="overlay" id="overlay">
+    <div class="popup" id="popup">
+      <!-- Content of the pop-up loaded from add_popup.html -->
+      <div id="popupContent">
+            <label for="serviceName">Service Name:</label>
+            <input type="text" id="serviceName">
+            <label for="serviceDisplayName">Display Name:</label>
+            <input type="text" id="serviceDisplayName">
+            <button onclick="addService()">OK</button>
+            <button onclick="cancelPopup()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+<form id="clientListForm" action="/client/list" method="post">
+    <div style="display: flex; align-items: center; justify-content: flex-end;">
+        <p id="totalRecords" style="margin-bottom: 0px; margin-right: 15px; color: #676768;"></p>
+
+        <a id="addNewService" style="background-color: #1f4a79;">Add New Service</a>
+
+        <select id="sortBy" name="sortBy">
+            <option value="s.id asc" selected>Service ID (ASC)</option>
+            <option value="s.id desc">Service ID (DESC)</option>
+            <option value="s.name asc">Service Name (ASC)</option>
+            <option value="s.name desc">Service Name (DESC)</option>
+            <option value="s.display_name asc">Display Name (ASC)</option>
+            <option value="s.display_name desc">Display Name (DESC)</option>
+        </select>
+
+        <select id="limit" name="limit">
+            <option value="5">Show 5 services</option>
+            <option value="10" selected>Show 10 services</option>
+            <option value="20">Show 20 services</option>
+            <option value="50">Show 50 services</option>
+        </select>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Service ID</th>
+                <th>Service Name</th>
+                <th>Display Name</th>
+            </tr>
+            <tr>
+                <th><input type="text" id="id" name="id"></th>
+                <th><input type="text" id="name" name="name"></th>
+                <th><input type="text" id="display_name" name="display_name"></th>
+            </tr>
+        </thead>
+        <tbody id="serviceDataBody">
+            <!-- Data rows will be dynamically populated here -->
+        </tbody>
+    </table>
+
+    <div id="pagination" class="pagination">
+        <!-- Pagination links will be dynamically populated here -->
+    </div>
+</form>
+
+{% end %}
+
+
+{% block scripts %}
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        function fetchData(pageNumber, limit) {
+            showLoading();
+
+            const data = {
+                page_number: pageNumber, 
+                limit: limit,
+                sort_by: $('#sortBy').val(), 
+                id: $('#id').val(),
+                name: $('#name').val(),
+                display_name: $('#display_name').val()
+            }
+
+            $.ajax({
+                url: '/service/list',
+                method: 'POST',
+                data: JSON.stringify(data),
+                success: function (response) {
+                    hideLoading();
+                    if (response.message){
+                        $('#serviceDataBody').empty();
+                        console.error(response.message);
+                    }else{
+                        populateTable(response.services);
+                        populatePagination(pageNumber, response.total_pages);
+                        populateTotalRecords("Total Services: " + response.total_records);
+                    }
+                },
+                error: function (error) {
+                    $('#serviceDataBody').empty();
+                    console.error('Error fetching data:', error);
+                }
+            });
+        }
+
+        fetchData(1, $('#limit').val());
+
+        function populateTable(data) {
+            var tableBody = $('#serviceDataBody');
+            tableBody.empty()
+
+            $.each(data, function (index, service) {
+                var row = '<tr>' +
+                    '<td>' + service.id + '</td>' +
+                    '<td><a target="_blank" style="color:#454545;" href="/client/edit/' + service.id + '"><u>' + service.name + '</u></a></td>' +
+                    '<td>' + service.display_name + '</td>' +
+                    '</tr>';
+
+                tableBody.append(row);
+            });
+        }
+
+        $('#id, #name, #display_name').on('keydown', function (event) {
+            if (event.key === 'Enter') {
+                fetchData(1, $('#limit').val());
+            }
+        });
+
+        $('#limit').on('change', function (e) {
+            e.preventDefault();
+            fetchData(1, $(this).val());
+        });
+        
+        $('#sortBy').on('change', function (e) {
+            e.preventDefault();
+            fetchData($("#activePageNumber").data('page'), $(limit).val());
+        });
+
+        $('#pagination').on('click', 'a', function (e) {
+            e.preventDefault();
+            fetchData($(this).data('page'), $('#limit').val());
+        });
+
+        $('#addNewService').on('click', function() {
+            document.getElementById('overlay').style.display = 'flex';
+        })
+    });
+</script>
+{% end %}
